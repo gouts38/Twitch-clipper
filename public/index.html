@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Twitch Clipper</title>
+<link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+<header class="topbar">
+  <div class="brand">
+    <span class="rec-dot" aria-hidden="true"></span>
+    <span class="brand-name">TWITCH · CLIPPER</span>
+  </div>
+  <div class="status" id="global-status">STANDBY</div>
+</header>
+
+<main>
+  <section class="panel input-panel">
+    <label for="url" class="label">SOURCE · VOD URL</label>
+    <div class="input-row">
+      <input id="url" type="url" placeholder="https://www.twitch.tv/videos/…" autocomplete="off" />
+      <button id="go" type="button">ANALYSER</button>
+    </div>
+    <p class="hint">Un lien. Un bouton. Les clips arrivent.</p>
+  </section>
+
+  <section class="panel progress-panel" id="progress-panel" hidden>
+    <div class="progress-head">
+      <span class="label" id="step-label">EN ATTENTE</span>
+      <span class="tc" id="progress-pct">0%</span>
+    </div>
+    <div class="progress-bar"><div class="progress-fill" id="progress-fill"></div></div>
+    <details class="logs" open>
+      <summary>LOG BROADCAST</summary>
+      <pre id="logs"></pre>
+    </details>
+  </section>
+
+  <section class="panel error-panel" id="error-panel" hidden>
+    <span class="label err">ERREUR</span>
+    <p id="error-msg"></p>
+  </section>
+
+  <section class="panel clips-panel" id="clips-panel" hidden>
+    <div class="clips-head">
+      <span class="label">CLIPS PRÊTS</span>
+      <span class="tc" id="clips-count">0</span>
+    </div>
+    <div id="clips-list" class="clips-list"></div>
+  </section>
+</main>
+
+<script src="app.js"></script>
+</body>
+</html>
