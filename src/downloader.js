@@ -4,9 +4,14 @@ const path = require('path');
 const fs = require('fs');
 const cfg = require('./config');
 
-const TWITCH_RE = /^https?://(www\.)?twitch\.tv/(videos/\d+|[\w-]+/clip/[\w-]+)/i;
-
-function isTwitchVod(url) { return TWITCH_RE.test(String(url || '').trim()); }
+function isTwitchVod(url) {
+  const s = String(url || '').trim().toLowerCase();
+  if (!s.startsWith('http://') && !s.startsWith('https://')) return false;
+  if (s.indexOf('twitch.tv/') === -1) return false;
+  if (s.indexOf('/videos/') !== -1) return true;
+  if (s.indexOf('/clip/') !== -1) return true;
+  return false;
+}
 
 function checkBin(bin) {
   return new Promise((resolve) => {
@@ -26,22 +31,32 @@ function downloadVod(url, jobDir, onLog, onProgress) {
     p.stdout.on('data', (d) => {
       const line = d.toString();
       onLog(line.trim());
-      const m = line.match(/\[download\]\s+([\d.]+)%/);
-      if (m) onProgress(Math.min(99, parseFloat(m[1])));
-      const dest = line.match(/Destination:\s+(.+)/);
-      if (dest) finalPath = dest[1].trim();
-      const merged = line.match(/Merging formats into "(.+)"/);
-      if (merged) finalPath = merged[1].trim();
+      const pctIdx = line.indexOf('%');
+      if (pctIdx > 0 && line.indexOf('[download]') !== -1) {
+        const before = line.slice(0, pctIdx).trim().split(/\s+/).pop();
+        const num = parseFloat(before);
+        if (!isNaN(num)) onProgress(Math.min(99, num));
+      }
+      const destKey = 'Destination:';
+      const destIdx = line.indexOf(destKey);
+      if (destIdx !== -1) finalPath = line.slice(destIdx + destKey.length).trim();
+      const mergeKey = 'Merging formats into "';
+      const mergeIdx = line.indexOf(mergeKey);
+      if (mergeIdx !== -1) {
+        const rest = line.slice(mergeIdx + mergeKey.length);
+        const end = rest.indexOf('"');
+        if (end !== -1) finalPath = rest.slice(0, end);
+      }
     });
     p.stderr.on('data', (d) => onLog(d.toString().trim()));
     p.on('error', (e) => reject(new Error('yt-dlp introuvable : ' + e.message)));
     p.on('exit', (code) => {
-      if (code !== 0) return reject(new Error('yt-dlp a échoué (code ' + code + ')'));
+      if (code !== 0) return reject(new Error('yt-dlp a echoue (code ' + code + ')'));
       if (!finalPath) {
         const found = fs.readdirSync(jobDir).find(f => f.startsWith('source.'));
         if (found) finalPath = path.join(jobDir, found);
       }
-      if (!finalPath) return reject(new Error('Fichier téléchargé introuvable'));
+      if (!finalPath) return reject(new Error('Fichier telecharge introuvable'));
       resolve(finalPath);
     });
   });
